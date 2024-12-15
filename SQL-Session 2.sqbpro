@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="" readonly="0" foreign_keys="" case_sensitive_like="" temp_store="" wal_autocheckpoint="" synchronous=""/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="8651"/><column_width id="4" width="0"/></tab_structure><tab_browse><table title="." custom_title="0" dock_id="2" table="0,0:"/><dock_state state="000000ff00000000fd00000001000000020000000000000000fc0100000002fb000000160064006f0063006b00420072006f00770073006500310100000000ffffffff0000000000000000fb000000160064006f0063006b00420072006f00770073006500320100000000ffffffff0000011900ffffff000000000000000000000004000000040000000800000008fc00000000"/><default_encoding codec=""/><browse_table_settings/></tab_browse><tab_sql><sql name="SQL 1*">-- SELECT
+
+-- Selecting eevrything from customer
+SELECT *
+FROM customer;
+
+-- adding some static values
+SELECT 2024 as this_year, 'December' as this_month, customer_id
+FROM customer;
+
+-- math
+SELECT 10*5;
+
+-- add an order by
+SELECT *
+FROM customer
+ORDER BY customer_last_name DESC;</sql><sql name="SQL 2*">-- WHERE
+
+SELECT *
+FROM customer
+WHERE customer_id = 1
+OR customer_id = 2;
+-- AND customer_id = 2 -- AND returns nothing 
+
+--IN
+SELECT *
+FROM customer_purchases
+WHERE customer_id IN (3,4,5) -- only customer id 3, 4 and 5
+AND vendor_id IN (3,4,5);
+
+SELECT *
+FROM product
+WHERE product_name LIKE '%peppers'; -- returns the wildcard pepper
+
+SELECT * FROM product
+WHERE product_id IN (1,2)
+OR product_size = 'medium';
+
+SELECT * FROM customer
+WHERE customer_last_name LIKE '%a%a%';
+
+SELECT * FROM product
+WHERE product_size IS NULL
+OR product_size = &quot;&quot;; --blank, different from a single space = ' '</sql><sql name="SQL 3*">-- CASE
+
+-- 'day of specialty fir certain criteria'
+SELECT *
+,CASE WHEN vendor_type = 'Fresh Focused'
+	THEN 'Wednesday'
+WHEN vendor_type = 'Prepared Foods'
+	THEN 'Thursday'
+	ELSE 'Saturday'
+	END as day_of_specialty
+,CASE WHEN vendor_name LIKE '%pie%'
+	THEN 'Wednesday'
+	END as only_pie_day
+--,CASE WHEN vendor_name = 'Annie's Pies' -- cant't do this (yet) so we need like instead! -- END as annies_day
+FROM vendor
+</sql><sql name="SQL 4*">-- DISTINCT
+
+--Without distinct, only wed/sat 150x
+SELECT market_day
+FROM market_date_info;
+
+-- with DISTINCT, only once each
+SELECT DISTINCT market_day
+FROM market_date_info;
+
+
+SELECT * FROM customer_purchases;
+
+/* which vendor has sold products to a customer */
+SELECT DISTINCT vendor_id
+FROM customer_purchases;
+
+/* which vendor has sold products to a customer AND whihc product was it*/
+SELECT DISTINCT vendor_id, product_id
+FROM customer_purchases;
+
+/* /* which vendor has sold products to a customer AND which productt was it and which customer bought it*/
+SELECT DISTINCT vendor_id, product_id, customer_id
+FROM customer_purchases
+ORDER by product_id ASC, customer_id DESC</sql><sql name="SQL 5*">-- INNER JOIN
+-- no alias inner JOIN
+
+SELECT customer_purchases.product_id,
+product.product_name,
+vendor_id,
+market_date,
+customer_id
+
+FROM customer_purchases
+INNER JOIN product
+	ON customer_purchases.product_id = product.product_id;
+	
+-- whihc vendor has sdold productsd to a customer AND whihc product was it 
+SELECT DISTINCT p.product_id, product_name, vendor_id
+FROM customer_purchases as cp -- get the purchases, get the vendor
+INNER JOIN product as p -- get the name of the product
+	ON p.product_id = cp.product_id</sql><sql name="SQL 6*">-- LEFT JOIN
+
+-- there are products that have been bought, but are there products that haven't been bought?
+SELECT p.product_id, product_name,
+cp.* -- cp.* = all columns in the customer purchases table
+FROM product as p
+LEFT JOIN customer_purchases as cp
+	ON p.product_id = cp.product_id;
+	
+SELECT DISTINCT p.product_id, product_name, cp.product_id
+FROM product as p
+LEFT JOIN customer_purchases as cp
+	ON p.product_id = cp.product_id
+WHERE cp.product_id IS NOT NULL; --cp.product_id IS NULL - what products have been sold (remove NOT to show the opposite
+
+--directions matter a lot!
+SELECT DISTINCT  cp.product_id, p.product_id, product_name
+FROM customer_purchases as p
+LEFT JOIN product as cp</sql><sql name="SQL 7*">-- multiple table joins
+
+
+SELECT DISTINCT --vendor_id, product_id, customer_id -- im unsatisified with the ids! 
+vendor_name
+,product_name
+,customer_first_name, customer_last_name
+,customer_postal_code, postal_code_3
+
+FROM customer_purchases cp 
+INNER JOIN customer c
+	ON c.customer_id = cp.customer_id
+INNER JOIN vendor v
+	ON v.vendor_id = cp.vendor_id
+INNER JOIN product p
+	ON p.product_id = cp.product_id
+INNER JOIN postal_data pd
+	ON c.customer_postal_code = pd.postal_code_3 -- different names!
+	</sql><current_tab id="5"/></tab_sql></sqlb_project>
