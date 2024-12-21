@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="C:/Users/Jason/DSI/sql/05_src/sql/farmersmarket.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="8502"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/><expanded_item id="4" parent="1"/></tab_structure><tab_browse><table title="vendor_inventory" custom_title="0" dock_id="1" table="4,16:mainvendor_inventory"/><dock_state state="000000ff00000000fd000000010000000200000463000004effc0100000001fb000000160064006f0063006b00420072006f00770073006500310100000000000004630000012900ffffff000002810000000000000004000000040000000800000008fc00000000"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="booth" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="92"/><column index="2" value="110"/><column index="3" value="300"/><column index="4" value="74"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="customer" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="79"/><column index="2" value="131"/><column index="3" value="129"/><column index="4" value="139"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="customer_purchases" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="69"/><column index="2" value="65"/><column index="3" value="87"/><column index="4" value="81"/><column index="5" value="56"/><column index="6" value="164"/><column index="7" value="106"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="market_date_info" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort><column index="0" mode="0"/></sort><column_widths><column index="1" value="87"/><column index="2" value="79"/><column index="3" value="87"/><column index="4" value="83"/><column index="5" value="118"/><column index="6" value="111"/><column index="7" value="86"/><column index="8" value="143"/><column index="9" value="115"/><column index="10" value="119"/><column index="11" value="107"/><column index="12" value="114"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="product" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="69"/><column index="2" value="300"/><column index="3" value="119"/><column index="4" value="129"/><column index="5" value="111"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="product_units" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="69"/><column index="2" value="300"/><column index="3" value="81"/><column index="4" value="127"/><column index="5" value="111"/><column index="6" value="159"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="temp" name="product_expanded" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="69"/><column index="2" value="300"/><column index="3" value="119"/><column index="4" value="127"/><column index="5" value="111"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="vendor" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="65"/><column index="2" value="263"/><column index="3" value="239"/><column index="4" value="159"/><column index="5" value="157"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="vendor_daily_sales" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="87"/><column index="2" value="79"/><column index="3" value="87"/><column index="4" value="83"/><column index="5" value="127"/><column index="6" value="71"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="vendor_inventory" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="87"/><column index="2" value="56"/><column index="3" value="67"/><column index="4" value="71"/><column index="5" value="85"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="SQL 1">-- INSERT UPDATE DELETE
+
+--1. add a product to the TABLE
+-- 2. change the product_size for that product
+-- 3. Delete your product
+
+DROP TABLE IF EXISTS temp.product_expanded;
+CREATE TEMP TABLE product_expanded AS
+	SELECT * FROM product;
+SELECT * FROM product_expanded
+
+--INSERT
+INSERT INTO product_expanded
+VALUES(26, 'Almonds', '1 lb', 1, 'lbs');
+
+SELECT * FROM product_expanded
+
+-- UPDATE
+-- change the product_size for almonds to 1/2 kg
+UPDATE product_expanded
+SET product_size = '1/2 kg', product_qty_type = 'kg'
+WHERE product_id = 26;
+
+SELECT * FROM product_expanded
+
+-- DELETE our almonds
+DELETE FROM product_expanded
+--SELECT * product_expanded
+WHERE product_id = 26;
+
+SELECT * FROM product_expanded;</sql><sql name="SQL 2">--VIEW
+DROP VIEW IF EXISTS vendor_daily_sales;
+CREATE VIEW IF NOT EXISTS vendor_daily_sales AS
+
+	SELECT 
+	md.market_date
+	,market_day
+	,market_week
+	,market_year
+	,vendor_name
+	,SUM(quantity*cost_to_customer_per_qty) as sales
+	
+	
+	
+	FROM market_date_info md
+	INNER JOIN customer_purchases cp
+		ON md.market_date = cp.market_date
+	INNER JOIN vendor v
+		ON cp.vendor_id = v.vendor_id
+	
+	GROUP BY cp.market_date, v.vendor_id;
+
+SELECT * FROM vendor_daily_sales;</sql><sql name="SQL 3">   --NEW VIEW
+DROP VIEW IF EXISTS todays_vendor_daily_sales;
+CREATE VIEW IF NOT EXISTS todays_vendor_daily_sales AS
+
+	SELECT 
+	md.market_date
+	,market_day
+	,market_week
+	,market_year
+	,vendor_name
+	,SUM(quantity*cost_to_customer_per_qty) as sales
+	
+	FROM market_date_info md
+	INNER JOIN (
+		SELECT * FROM customer_purchases 
+		UNION
+		SELECT * FROM new_customer_purchases) cp
+		
+		ON md.market_date = cp.market_date
+	INNER JOIN vendor v
+		ON cp.vendor_id = v.vendor_id
+	
+	/*PICK ONE OF THE WHERE STATEMENTS!*/
+	--WHERE md.market_date = strftime('%Y-%m-%d',DATE('now'),'-1 day')-- today! -- 
+	WHERE md.market_date = date('now','localtime')
+	--WHERE md.market_date = '2024-12-18'
+	
+	GROUP BY cp.market_date, v.vendor_id;
+
+SELECT * FROM vendor_daily_sales;
+
+
+
+</sql><sql name="SQL 4">UPDATE new_customer_purchases
+SET market_date =DATE('now','localtime')
+
+INSERT INTO market_date_info
+VALUES('2024-12-18','Wednesday','51','2024','8:00 AM','2:00 PM','nothing interesting','Winter','0','4',1,0)
+
+SELECT * FROM todays_vendor_daily_sales
+GROUP BY cp.market_date, v.vendor_id</sql><sql name="SQL 5">--JSON to a TABLE
+
+--create a temp TABLE
+--insert the json as a long string
+--write a json_each statement
+--use the json_each statement as a subquery to extract our column values
+-- now we have a table! 
+
+DROP TABLE IF EXISTS temp.[new_json];
+CREATE TEMP TABLE IF NOT EXISTS temp.new_json
+(
+col1 BLOB
+);
+
+INSERT INTO temp.new_json
+VALUES(
+'[
+    {
+        &quot;country&quot;: &quot;Afghanistan&quot;,
+        &quot;city&quot;: &quot;Kabul&quot;
+    },
+    {
+        &quot;country&quot;: &quot;Albania&quot;,
+        &quot;city&quot;: &quot;Tirana&quot;
+    }]'
+    );
+    
+SELECT key
+,JSON_EXTRACT(value,'$.country') as country
+,JSON_EXTRACT(value,'$.city') as city
+
+FROM (
+   SELECT * 
+   FROM new_json,JSON_EACH(new_json.col1, '$')
+ ) x
+</sql><sql name="SQL 6">--CROSS JOIN
+
+DROP TABLE IF EXISTS temp.sizes;
+CREATE TEMP TABLE IF NOT EXISTS temp.sizes (size TEXT);
+
+INSERT INTO temp.sizes
+VALUES('small'),
+('medium'),
+('large');
+
+SELECT * from temp.sizes;
+
+SELECT product_name, size
+FROM product
+CROSS JOIN temp.sizes </sql><sql name="SQL 8"></sql><current_tab id="6"/></tab_sql></sqlb_project>

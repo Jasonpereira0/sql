@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="C:/Users/Jason/DSI/sql/05_src/sql/farmersmarket.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="8651"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/><expanded_item id="4" parent="1"/></tab_structure><tab_browse><table title="customer_purchases" custom_title="0" dock_id="1" table="4,18:maincustomer_purchases"/><dock_state state="000000ff00000000fd0000000100000002000004fa000004edfc0100000001fb000000160064006f0063006b00420072006f00770073006500310100000000000004fa0000012e00ffffff000002720000000000000004000000040000000800000008fc00000000"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="booth" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="90"/><column index="2" value="108"/><column index="3" value="300"/><column index="4" value="72"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="customer_purchases" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="69"/><column index="2" value="64"/><column index="3" value="85"/><column index="4" value="79"/><column index="5" value="55"/><column index="6" value="158"/><column index="7" value="103"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="product" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="69"/><column index="2" value="296"/><column index="3" value="117"/><column index="4" value="126"/><column index="5" value="107"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="vendor" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="64"/><column index="2" value="257"/><column index="3" value="234"/><column index="4" value="156"/><column index="5" value="154"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="vendor_inventory" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="85"/><column index="2" value="55"/><column index="3" value="66"/><column index="4" value="71"/><column index="5" value="85"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="SQL 1*">--IFNULL and coalesce + NULLIF
+
+SELECT *
+,IFNULL(product_size, 'Unknown')  as new_product_size
+
+--less meaningful &quot;conceptual&quot;
+,IFNULL(product_size, product_qty_type) -- both null, results with null
+,coalesce(product_size,product_qty_type,'missing') -- if first the value is null, the second is null, then do the third value
+,IFNULL(IFNULL(product_size, product_qty_type),'missing') -- same but have to wrap within
+
+
+FROM product;
+
+SELECT *
+,IFNULL(product_size, 'Unknown')  as new_product_size
+,NULLIF(product_size, '') -- finding the values that product_size column is &quot;blank&quot; and setting them to null
+,coalesce(NULLIF(product_size, ''),  'unknown') as good_product_size
+,IFNULL(NULLIF(product_size, ''),  'unknown') as good_product_size
+
+FROM product
+
+WHERE NULLIF(product_size, '') IS NULL -- both blanks and NULLs
+--WHERE product_size IS NULL -- only NULLs</sql><sql name="SQL 2*">--windowed function
+-- what was the highest price seen per product for each vendor
+
+SELECT *
+
+FROM (
+
+	SELECT 
+	vendor_id
+	,market_date
+	,product_id
+	,original_price
+	,ROW_NUMBER() OVER(PARTITION BY vendor_id,product_id ORDER BY original_price DESC) as price_rank
+
+	FROM vendor_inventory
+) x
+
+WHERE x.price_rank = 1
+</sql><sql name="SQL 3*">--NTILE (4,5,100?)
+
+--daily sales
+SELECT *
+,NTILE(4) OVER(PARTITION by vendor_name ORDER by sales asc) as quartile
+,NTILE(5) OVER(PARTITION by vendor_name ORDER by sales asc) as quintile
+,NTILE(100) OVER(PARTITION by vendor_name ORDER by sales asc) as percentile
+
+FROM (
+	SELECT 
+	md.market_date,
+	market_week,
+	market_year,
+	vendor_name,
+	sum(quantity*cost_to_customer_per_qty) as sales
+
+	FROM market_date_info md
+	JOIN customer_purchases cp
+		on md.market_date = cp.market_date
+	JOIN vendor v
+		on cp.vendor_id = v.vendor_id
+		
+	GROUP BY md.market_date, v.vendor_id
+) x</sql><sql name="SQL 4*">--desnse_rank vs rank vs row_number
+
+DROP TABLE IF EXISTS temp.row_rank_dense;
+
+CREATE TEMP TABLE IF NOT EXISTS temp.row_rank_dense
+(
+emp_id INT,
+salary INT
+);
+
+INSERT INTO temp.row_rank_dense
+VALUES(1,200000),
+        (2,200000),
+        (3, 160000),
+		(4, 120000),
+		(5, 125000),
+		(6, 165000),
+		(7, 230000),
+		(8, 100000),
+		(9, 165000),
+		(10, 100000);
+		
+		SELECT *
+		,ROW_NUMBER() OVER(ORDER BY salary DESC) as [ROW_NUMBER]
+		,RANK() OVER(ORDER BY salary DESC) as [RANK]
+		,DENSE_RANK() OVER(ORDER BY salary DESC) as [DENSE_RANK]
+		
+		FROM row_rank_dense</sql><sql name="SQL 5*">--string manipulations
+
+SELECT DISTINCT 
+LTRIM('                 THOMAS ROSENTHAL              ') as [ltrim]
+,RTRIM('                 THOMAS ROSENTHAL              ') as [rtrim]
+,RTRIM(LTRIM('                 THOMAS ROSENTHAL              ')) as [both]
+,TRIM('                 THOMAS ROSENTHAL              ')  as [also_both]
+
+,product_name
+,REPLACE(product_name, 'a','e')
+,REPLACE(product_name,'h','1') -- case sensitivity
+,REPLACE(product_name,' ','_') -- replace spaces with underscore (good way to get pot_hole_case)
+
+
+FROM product
+
+--string manipulations
+
+SELECT DISTINCT 
+LTRIM('                 THOMAS ROSENTHAL              ') as [ltrim]
+,RTRIM('                 THOMAS ROSENTHAL              ') as [rtrim]
+,RTRIM(LTRIM('                 THOMAS ROSENTHAL              ')) as [both]
+,TRIM('                 THOMAS ROSENTHAL              ')  as [also_both]
+
+,product_name
+,REPLACE(product_name, 'a','e')
+,REPLACE(product_name,'h','1') -- case sensitivity
+,REPLACE(product_name,' ','_') -- replace spaces with underscore (good way to get pot_hole_case)
+
+,UPPER(product_name) as upper_case
+,LOWER(product_name) as lower_case
+
+,product_name || product_size
+
+FROM product;
+
+--concat
+SELECT *
+,customer_first_name || ' ' || customer_last_name as customer_name
+,UPPER(customer_first_name) || ' ' || UPPER(customer_last_name) as upper_last_name
+
+,SUBSTR(customer_last_name,4) -- any length from the 4th character
+,SUBSTR(customer_last_name,4,2) --2 characters long from the 4th character
+--,SUBSTR(customer_last_name, -5,4)
+--,INSTR(customer_last_name,'a')
+
+,length(customer_first_name || ' ' || customer_last_name)
+
+,'THOMAS
+
+ROSENTHAL' -- added a linebreak
+,replace('THOMAS
+
+ROSENTHAL', char(10), ' ') -- removing all linebreaks from this string
+
+FROM customer
+
+WHERE customer_first_name REGEXP '(a)$'</sql><sql name="SQL 6*">--UNION/UNION ALL
+</sql><sql name="SQL 7*">DROP TABLE IF EXISTS temp.store2;
+CREATE TEMP TABLE IF NOT EXISTS temp.store2
+(
+costume TEXT,
+quantity INT
+);
+
+INSERT INTO temp.store2
+VALUES(&quot;tiger&quot;,2),
+	(&quot;dancer&quot;,7),
+	(&quot;superhero&quot;, 5);
+	
+SELECT 
+s1.costume
+,s1.quantity as store1_quantity
+,s2.quantity as store2_quantity
+
+FROM store1 s1
+LEFT JOIN store2 s2
+	ON s1.costume = s2.costume
+
+UNION ALL
+
+SELECT
+s2.costume
+,s1.quantity
+,s2.quantity 
+
+FROM store2 s2
+LEFT JOIN store1 s1
+	ON s1.costume = s2.costume
+WHERE s1.costume IS NULL
+</sql><sql name="SQL 8*">--INTERSECT / EXCEPT
+
+--product that have been sold (e.g are in customer_purchases and product)
+SELECT product_id
+FROM customer_purchases
+INTERSECT -- similar to the inner join in this case
+SELECT product_id
+FROM product;
+
+--products that NOT been sold (e.g. are NOT in customer_pruchases even though in product) 
+-- add the name
+SELECT x. product_id, product_name
+FROM (
+	SELECT product_id
+	FROM product -- what products are NOT in customer_purchases
+	EXCEPT
+	SELECT product_id
+	FROM customer_purchases
+) x 
+JOIN product p on x.product_id = p.product_id
+	
+--NOTHING
+--direction matter a lot!
+SELECT product_id
+FROM  customer_purchases -- what products are NOT in product -- NONE!
+EXCEPT
+SELECT product_id
+FROM product;    </sql><current_tab id="7"/></tab_sql></sqlb_project>
