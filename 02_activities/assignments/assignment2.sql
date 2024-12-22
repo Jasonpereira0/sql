@@ -89,9 +89,12 @@ Remove any trailing or leading whitespaces. Don't just use a case statement for 
 Hint: you might need to use INSTR(product_name,'-') to find the hyphens. INSTR will help split the column. */
 
 SELECT product_name
-    ,TRIM(SUBSTR(product_name, INSTR(product_name, '-') + 1)) AS description
-FROM product
-WHERE INSTR(product_name, '-') > 0;
+	,CASE
+		WHEN INSTR(product_name, '-') > 0 THEN
+    TRIM(SUBSTR(product_name, INSTR(product_name, '-') + 1))
+		ELSE NULL
+		END AS description
+FROM product;
 
 
 /* 2. Filter the query to show any product_size value that contain a number with REGEXP. */
@@ -112,22 +115,25 @@ HINT: There are a possibly a few ways to do this query, but if you're struggling
 3) Query the second temp table twice, once for the best day, once for the worst day, 
 with a UNION binding them. */
 
+DROP TABLE IF EXISTS sales_values_grouped_by_date;
+CREATE TEMP TABLE sales_values_grouped_by_date AS
 --Calculating total_sales grouped by market_date
-WITH sales_values_grouped_by_date AS (
-    SELECT market_date 
-        ,SUM(quantity*cost_to_customer_per_qty) AS total_sales
+SELECT market_date 
+	,SUM(quantity*cost_to_customer_per_qty) AS total_sales
     FROM customer_purchases
-    GROUP BY market_date
-),
+    GROUP BY market_date;
 
+DROP TABLE IF EXISTS ranked_sales;
+CREATE TEMP TABLE ranked_sales AS
 --Ranking the market dates based on total_sales
-ranked_sales AS (
-    SELECT market_date 
-        ,total_sales
-        ,RANK() OVER (ORDER BY total_sales DESC) AS rank_desc
-        ,RANK() OVER (ORDER BY total_sales ASC) AS rank_asc
-    FROM sales_values_grouped_by_date
-)
+SELECT market_date 
+	,total_sales
+	,DENSE_RANK() OVER (ORDER BY total_sales DESC) AS rank_desc
+	,DENSE_RANK() OVER (ORDER BY total_sales ASC) AS rank_asc
+FROM sales_values_grouped_by_date;
+
+SELECT * FROM ranked_sales;
+
 --Returning the best and worst sales days using UNION
 SELECT market_date
     ,total_sales
@@ -156,36 +162,59 @@ Think a bit about the row counts: how many distinct vendors, product names are t
 How many customers are there (y). 
 Before your final group by you should have the product of those two queries (x*y).  */
 
---Counting total number of unique customers
-WITH total_customers AS (
-    SELECT COUNT(DISTINCT customer_id) AS num_customers
-    FROM customer_purchases
-),
---Calculating total_product_revenue
-product_revenue AS (
-    SELECT 
-        product_id
-        ,SUM(quantity * cost_to_customer_per_qty) AS total_product_revenue
-    FROM customer_purchases
-    GROUP BY product_id
+WITH filtered_inventory AS (
+    SELECT product_id
+       ,original_price
+       ,ROW_NUMBER() OVER (PARTITION BY product_id ORDER BY market_date DESC) AS row_num
+    FROM vendor_inventory
 ),
 
---JOIN vendor, product, and revenue values
-vendor_product_revenue AS (
+unique_inventory AS (
+    SELECT product_id
+        ,original_price
+    FROM filtered_inventory
+    WHERE row_num = 1
+),
+
+vendor_with_inventory AS (
     SELECT v.vendor_name
-        ,p.product_name
-        ,pr.total_product_revenue * 5 * tc.num_customers AS total_revenue
+        ,ui.product_id
+        ,ui.original_price
     FROM vendor v
-    INNER JOIN vendor_inventory vi ON v.vendor_id = vi.vendor_id
-    INNER JOIN product p ON vi.product_id = p.product_id
-    INNER JOIN product_revenue pr ON vi.product_id = pr.product_id
-    CROSS JOIN total_customers tc
+    
+	JOIN 
+        unique_inventory ui ON v.vendor_id = (
+            SELECT vendor_id 
+            FROM vendor_inventory vi
+            WHERE vi.product_id = ui.product_id
+			LIMIT 1
+        )
+),
+
+vendor_products AS (
+    SELECT 
+        vwi.vendor_name,
+        p.product_name,
+        vwi.product_id,
+        vwi.original_price
+    FROM 
+        vendor_with_inventory vwi
+    JOIN 
+        product p ON vwi.product_id = p.product_id
+),
+
+customer_count AS (
+    SELECT DISTINCT COUNT(*) AS num_customers FROM customer
 )
 
-SELECT vendor_name
-    ,product_name
-    ,total_revenue
-FROM vendor_product_revenue;
+SELECT vp.vendor_name
+    ,vp.product_name
+    ,SUM(vp.original_price * 5 * cc.num_customers) AS total_revenue_per_product_qty5
+FROM vendor_products vp
+CROSS JOIN customer_count cc
+GROUP BY vp.vendor_name
+	,vp.product_name;
+
 
 	
 -- INSERT
@@ -245,22 +274,20 @@ When you have all of these components, you can run the update statement. */
 
 --include the current_quantity column
 ALTER TABLE product_units
-ADD current_quantity;
+ADD current_quantity INT;
 SELECT * FROM product_units;
 
 --updating current_quantity column with the last quantity per customer
 UPDATE product_units
-SET current_quantity = (
-    SELECT COALESCE(vi.quantity, 0) 
+SET current_quantity = COALESCE((
+    SELECT vi.quantity
     FROM vendor_inventory vi
     WHERE vi.product_id = product_units.product_id
-)
-WHERE product_id IN (
-    SELECT DISTINCT product_id 
-    FROM vendor_inventory
-);
+    ORDER BY vi.market_date DESC
+    LIMIT 1
+), 0);
+
 SELECT * FROM product_units
-ORDER BY product_units.current_quantity DESC;
 
 
 
